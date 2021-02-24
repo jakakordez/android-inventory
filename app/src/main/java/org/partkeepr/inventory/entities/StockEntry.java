@@ -5,4 +5,5 @@ public class StockEntry {
     public int StockLevel;
     public String Comment;
     public String DateTime;
+    public User User;
 }

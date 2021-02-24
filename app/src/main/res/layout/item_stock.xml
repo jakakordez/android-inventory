@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="50dp"
     android:background="#fbfbfb"
+    android:minHeight="50dp"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <TextView
@@ -11,10 +12,12 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toEndOf="@id/lblStock"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/lblDateTime"
         android:textSize="18sp"
+        android:ellipsize="marquee"
         android:text="gase"
-        android:layout_margin="10dp"/>
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"/>
     <TextView
         android:id="@+id/lblStock"
         android:layout_width="40dp"
@@ -31,7 +34,18 @@
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         android:text="asgeasgje"
-        android:layout_margin="10dp"
+        android:layout_margin="5dp"
+        android:textSize="14sp"
         app:layout_constraintTop_toTopOf="parent"/>
+
+    <TextView
+        android:id="@+id/lblUser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:text="asgeasgje"
+        android:textSize="14sp"
+        android:layout_margin="5dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

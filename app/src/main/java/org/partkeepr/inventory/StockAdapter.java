@@ -13,6 +13,9 @@ import androidx.annotation.NonNull;
 import org.partkeepr.inventory.entities.Part;
 import org.partkeepr.inventory.entities.StockEntry;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 public class StockAdapter extends ArrayAdapter<StockEntry> {
@@ -31,6 +34,9 @@ public class StockAdapter extends ArrayAdapter<StockEntry> {
         TextView tv = (TextView)v.findViewById(R.id.lblComment);
         tv.setText(entry.Comment);
 
+        TextView lblUser = v.findViewById(R.id.lblUser);
+        lblUser.setText(entry.User.Username);
+
         TextView lblStock = v.findViewById(R.id.lblStock);
         lblStock.setText((entry.StockLevel > 0?"+":"")+entry.StockLevel);
         if(entry.StockLevel > 0){
@@ -39,7 +45,17 @@ public class StockAdapter extends ArrayAdapter<StockEntry> {
         else lblStock.setTextColor(Color.RED);
 
         TextView lblDateTime = v.findViewById(R.id.lblDateTime);
-        lblDateTime.setText(entry.DateTime);
+        String dtStart = "2010-10-15T09:27:37Z";
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+        SimpleDateFormat outFormat = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
+        try {
+            Date date = format.parse(entry.DateTime.substring(0, 19));
+            lblDateTime.setText(outFormat.format(date));
+        } catch (ParseException e) {
+            e.printStackTrace();
+            lblDateTime.setText(entry.DateTime);
+        }
+
 
         return v;
     }

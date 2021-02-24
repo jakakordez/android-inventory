@@ -6,6 +6,7 @@ import org.partkeepr.inventory.entities.Category;
 import org.partkeepr.inventory.entities.StockEntry;
 import org.partkeepr.inventory.entities.StorageLocation;
 import org.partkeepr.inventory.entities.Part;
+import org.partkeepr.inventory.entities.User;
 
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -104,7 +105,15 @@ public class Partkeepr {
         }
         s.StockLevel = stockObject.getInt("stockLevel");
         s.DateTime = stockObject.getString("dateTime");
+        s.User = ParseUser(stockObject.getJSONObject("user"));
         return s;
+    }
+
+    private User ParseUser(JSONObject userObject) throws Exception{
+        User u = new User();
+        u.Id = userObject.getString("@id");
+        u.Username = userObject.getString("username");
+        return u;
     }
 
     private Part ParsePart(JSONObject partObject) throws Exception{
