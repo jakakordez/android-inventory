@@ -10,7 +10,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import org.partkeepr.inventory.entities.Part;
 import org.partkeepr.inventory.entities.StockEntry;
 
 import java.text.ParseException;
