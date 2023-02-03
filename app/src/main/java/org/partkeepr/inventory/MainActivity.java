@@ -3,10 +3,14 @@ package org.partkeepr.inventory;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -52,6 +56,11 @@ public class MainActivity extends AppCompatActivity {
         lstParts = findViewById(R.id.lstParts);
         btnAdd = findViewById(R.id.btnAdd);
         Initialize(new Client());
+
+        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_DENIED){
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, 1);
+        }
     }
 
     private void Initialize(Client client){
@@ -70,7 +79,7 @@ public class MainActivity extends AppCompatActivity {
             partAdapter.SetSelected(selectedPart);
             LoadStock(partAdapter.getItem(position));
         });
-        lstParts.setOnItemLongClickListener((parent, view, position, id) -> {
+        /*lstParts.setOnItemLongClickListener((parent, view, position, id) -> {
             Log.i("GUI", "Setting stock to 42");
             Part p = partAdapter.getItem(position);
             partkeepr.SetStock(p, 13, "abc", success -> {
@@ -87,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             return true;
-        });
+        });*/
 
         LoadParts();
         partkeepr.GetLocations(newLocations -> {
@@ -213,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
                     String username = jsonObject.getString("username");
                     String password = jsonObject.getString("password");
                     String ip = jsonObject.getString("ip");
+                    Toast.makeText(getApplicationContext(), "Logging in as " + username, Toast.LENGTH_SHORT).show();
                     Initialize(new Client(ip, username, password));
                 }
                 catch (Exception e){
