@@ -53,7 +53,7 @@ public class Partkeepr {
             }
             catch (Exception e){
                 e.printStackTrace();
-                onStock.Result(null);
+                onStock.Result(new ArrayList<>());
             }
         });
     }
