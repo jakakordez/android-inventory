@@ -150,28 +150,34 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
+    public void ShowLocationDialog(Consumer<StorageLocation> handler)
+    {
+        AlertDialog.Builder builderSingle = new AlertDialog.Builder(this);
+        builderSingle.setIcon(R.drawable.ic_launcher_background);
+        builderSingle.setTitle("Select location");
+
+        final ArrayAdapter<StorageLocation> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, locations);
+
+        builderSingle.setNegativeButton("All", (dialog, which) -> {
+            dialog.dismiss();
+            handler.accept(null);
+        });
+
+        builderSingle.setAdapter(arrayAdapter, (dialog, which) -> {
+            dialog.dismiss();
+            handler.accept(arrayAdapter.getItem(which));
+        });
+        builderSingle.show();
+    }
+
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.menu_location){
             if(locations != null){
-                AlertDialog.Builder builderSingle = new AlertDialog.Builder(this);
-                builderSingle.setIcon(R.drawable.ic_launcher_background);
-                builderSingle.setTitle("Select location");
-
-                final ArrayAdapter<StorageLocation> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, locations);
-
-                builderSingle.setNegativeButton("All", (dialog, which) -> {
-                    selectedLocation = null;
-                    dialog.dismiss();
+                ShowLocationDialog(l -> {
+                    selectedLocation = l;
                     LoadParts();
                 });
-
-                builderSingle.setAdapter(arrayAdapter, (dialog, which) -> {
-                    selectedLocation = arrayAdapter.getItem(which);
-                    dialog.dismiss();
-                    LoadParts();
-                });
-                builderSingle.show();
             }
             return true;
         }
