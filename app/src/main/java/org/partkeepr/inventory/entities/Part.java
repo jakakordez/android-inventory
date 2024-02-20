@@ -19,7 +19,7 @@ public class Part {
 
     public JSONObject SourceObject;
 
-    public boolean CheckedToday(){
+    public boolean CheckedThisWeek(){
         if(StockEntries == null) return false;
         for (StockEntry stockEntry : StockEntries) {
             try {

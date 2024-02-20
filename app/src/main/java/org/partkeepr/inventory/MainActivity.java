@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         partkeepr.GetStock(stock -> {
             runOnUiThread(()->{
                 part.StockEntries = stock;
-                if(part.CheckedToday()) checkedParts.add(part.Id);
+                if(part.CheckedThisWeek()) checkedParts.add(part.Id);
                 stockEntries.clear();
                 stockEntries.addAll(stock);
                 stockAdapter.notifyDataSetChanged();
