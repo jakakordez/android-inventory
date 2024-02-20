@@ -10,30 +10,47 @@
         android:id="@+id/lstParts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@id/lstStock"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_weight="1.0"
-        app:layout_constraintBottom_toTopOf="@id/lstStock"/>
+        app:layout_constraintVertical_weight="1.0" />
 
     <View
-        android:layout_height="2dp"
         android:layout_width="match_parent"
-        app:layout_constraintBottom_toTopOf="@id/lstStock"
-        android:background="@color/design_default_color_primary"/>
+        android:layout_height="2dp"
+        android:background="@color/design_default_color_primary"
+        app:layout_constraintBottom_toTopOf="@id/lstStock" />
 
     <ListView
         android:id="@+id/lstStock"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintVertical_weight="0.5"
+        app:layout_constraintBottom_toTopOf="@id/btnAdd"
         app:layout_constraintTop_toBottomOf="@id/lstParts"
-        app:layout_constraintBottom_toTopOf="@id/btnAdd"/>
+        app:layout_constraintVertical_weight="0.5" />
 
     <ImageButton
         android:id="@+id/btnAdd"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="100dp"
         android:background="@color/design_default_color_primary"
         android:src="@drawable/ic_baseline_create_24"
-        app:layout_constraintBottom_toBottomOf="parent"/>
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/btnMove"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageButton
+        android:id="@+id/btnMove"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:background="@color/design_default_color_error"
+        android:src="@drawable/ic_baseline_edit_location_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.constraintlayout.widget.Group
+        android:id="@+id/group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:constraint_referenced_ids="btnAdd,btnMove" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

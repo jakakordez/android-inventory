@@ -1,5 +1,7 @@
 package org.partkeepr.inventory.entities;
 
+import org.json.JSONObject;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -14,6 +16,8 @@ public class Part {
     public StorageLocation PartLocation;
 
     public ArrayList<StockEntry> StockEntries;
+
+    public JSONObject SourceObject;
 
     public boolean CheckedToday(){
         if(StockEntries == null) return false;

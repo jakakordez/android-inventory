@@ -40,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     StorageLocation selectedLocation;
     Part selectedPart;
     ImageButton btnAdd;
+    ImageButton btnMove;
     Set<String> checkedParts = new HashSet<String>();
     static final int LAUNCH_QR_ACTIVITY = 1;
 
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
         lstStock = findViewById(R.id.lstStock);
         lstParts = findViewById(R.id.lstParts);
         btnAdd = findViewById(R.id.btnAdd);
+        btnMove = findViewById(R.id.btnMove);
         Initialize(new Client());
 
         if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
@@ -97,6 +99,17 @@ public class MainActivity extends AppCompatActivity {
                 dialog.partkeepr = partkeepr;
                 dialog.OnChange = this::LoadParts;
                 dialog.show(getSupportFragmentManager(), null);
+            }
+        });
+
+        btnMove.setOnClickListener(v -> {
+            if (selectedPart != null) {
+                ShowLocationDialog(location -> {
+                    selectedPart.PartLocation = location;
+                    partkeepr.PutPart(success -> {
+                        LoadParts();
+                    },selectedPart);
+                });
             }
         });
     }

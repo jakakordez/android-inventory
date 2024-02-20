@@ -1,6 +1,7 @@
 package org.partkeepr.inventory;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.partkeepr.inventory.entities.Category;
 import org.partkeepr.inventory.entities.StockEntry;
@@ -23,8 +24,8 @@ public class Partkeepr {
     }
 
     public void GetParts(Client.OnResult<ArrayList<Part>> onParts, StorageLocation location){
-        String url = "/parts";
-        if(location != null) url += "?filter=" + Filter(location);
+        String url = "/parts?itemsPerPage=100";
+        if(location != null) url += "&filter=" + Filter(location);
         client.Request(url, json -> {
             try {
                 ArrayList<Part> parts = new ArrayList<>();
@@ -58,6 +59,22 @@ public class Partkeepr {
         });
     }
 
+    public void PutPart(Client.OnResult<Boolean> onResult, Part part) {
+        try {
+            part.SourceObject.put("storageLocation", part.PartLocation.SourceObject);
+            client.Put(part.Id, part.SourceObject.toString(), success -> {
+                try {
+                    onResult.Result(success);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     private String Filter(Part part){
         try {
             String url = "[{\"subfilters\":[],\"property\":\"part\",\"operator\":\"=\",\"value\":\"" + part.Id + "\"}]";
@@ -81,7 +98,7 @@ public class Partkeepr {
     }
 
     public void GetLocations(Client.OnResult<ArrayList<StorageLocation>> onLocations){
-        client.Request("/storage_locations", json -> {
+        client.Request("/storage_locations?itemsPerPage=100", json -> {
             try {
                 ArrayList<StorageLocation> entries = new ArrayList<>();
                 JSONArray jsonArray = json.getJSONArray("hydra:member");
@@ -126,6 +143,7 @@ public class Partkeepr {
         if(partObject.has("storageLocation") && !partObject.isNull("storageLocation")) {
             p.PartLocation = ParseLocation(partObject.getJSONObject("storageLocation"));
         }
+        p.SourceObject = partObject;
         return p;
     }
 
@@ -140,6 +158,7 @@ public class Partkeepr {
         StorageLocation l = new StorageLocation();
         l.Id = locationObject.getString("@id");
         l.Name = locationObject.getString("name");
+        l.SourceObject = locationObject;
         return l;
     }
 
