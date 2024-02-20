@@ -122,7 +122,10 @@ public class Partkeepr {
         }
         s.StockLevel = stockObject.getInt("stockLevel");
         s.DateTime = stockObject.getString("dateTime");
-        s.User = ParseUser(stockObject.getJSONObject("user"));
+        if (stockObject.has("user") && !stockObject.isNull("user")) {
+            s.User = ParseUser(stockObject.getJSONObject("user"));
+        }
+        else s.User = new User();
         return s;
     }
 
