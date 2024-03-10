@@ -170,17 +170,20 @@ public class MainActivity extends AppCompatActivity {
         builderSingle.setIcon(R.drawable.ic_launcher_background);
         builderSingle.setTitle("Select location");
 
-        final ArrayAdapter<StorageLocation> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.select_dialog_singlechoice, locations);
+        final ArrayAdapter<StorageLocation> arrayAdapter = new ArrayAdapter<>(this,
+                android.R.layout.select_dialog_singlechoice, locations);
+
+        int selected = locations.indexOf(selectedLocation);
+        builderSingle.setSingleChoiceItems(arrayAdapter, selected, (dialog, i) -> {
+            dialog.dismiss();
+            handler.accept(arrayAdapter.getItem(i));
+        });
 
         builderSingle.setNegativeButton("All", (dialog, which) -> {
             dialog.dismiss();
             handler.accept(null);
         });
 
-        builderSingle.setAdapter(arrayAdapter, (dialog, which) -> {
-            dialog.dismiss();
-            handler.accept(arrayAdapter.getItem(which));
-        });
         builderSingle.show();
     }
 
