@@ -12,6 +12,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import android.content.SharedPreferences;
 import android.util.Base64;
 import android.util.Log;
 
@@ -24,7 +25,6 @@ public class Client {
         void Result(T argument);
     }
     String ip;
-
     String user;
     String password;
     ExecutorService executorService;
@@ -41,6 +41,28 @@ public class Client {
         ip = "192.168.1.1:8080";
         user = "user";
         password = "pass123";
+
+    }
+
+    public static Client FromPreferences(SharedPreferences preferences)
+    {
+        String user = preferences.getString("user", "");
+        String password = preferences.getString("password", "");
+        String ip = preferences.getString("ip", "");
+        if (user.isEmpty() || password.isEmpty() || ip.isEmpty())
+        {
+            return null;
+        }
+        return new Client(ip, user, password);
+    }
+
+    public void PersistCredentials(SharedPreferences preferences)
+    {
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.putString("user", user);
+        editor.putString("password", password);
+        editor.putString("ip", ip);
+        editor.apply();
     }
 
     public Future<JSONObject> Request(String address, OnResult<JSONObject> onResult){

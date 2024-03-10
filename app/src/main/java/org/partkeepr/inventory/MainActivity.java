@@ -1,11 +1,5 @@
 package org.partkeepr.inventory;
 
-import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
@@ -18,6 +12,12 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import org.json.JSONObject;
 import org.partkeepr.inventory.entities.Part;
@@ -88,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
             else{
                 Log.i("GUI", "Received " + newLocations.size() + " locations");
                 locations = newLocations;
+                partkeepr.PersistCredentials(getPreferences(MODE_PRIVATE));
             }
         });
 
@@ -204,6 +205,17 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(i, LAUNCH_QR_ACTIVITY);
         }
         return false;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        Client client = Client.FromPreferences(getPreferences(MODE_PRIVATE));
+        if (client != null)
+        {
+            Initialize(client);
+        }
     }
 
     @Override

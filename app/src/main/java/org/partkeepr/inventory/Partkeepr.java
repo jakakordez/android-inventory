@@ -1,5 +1,7 @@
 package org.partkeepr.inventory;
 
+import android.content.SharedPreferences;
+
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -112,6 +114,11 @@ public class Partkeepr {
                 onLocations.Result(null);
             }
         });
+    }
+
+    public void PersistCredentials(SharedPreferences preferences)
+    {
+        client.PersistCredentials(preferences);
     }
 
     private StockEntry ParseStockEntry(JSONObject stockObject) throws Exception{
