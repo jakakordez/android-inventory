@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="60dp"
     android:background="#fbfbfb"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
@@ -9,9 +9,10 @@
         android:id="@+id/imgCheck"
         android:layout_width="32dp"
         android:layout_height="32dp"
-        android:layout_margin="10dp"
+        android:layout_margin="5dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:src="@drawable/ic_baseline_check_circle_24"
         android:visibility="invisible"
         app:tint="#00ee00" />
@@ -19,20 +20,22 @@
     <TextView
         android:id="@+id/lblName"
         android:layout_width="0dp"
-        android:layout_height="40dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toEndOf="@id/imgCheck"
+        android:layout_height="wrap_content"
         android:textSize="20sp"
-        android:layout_margin="10dp"
-        android:text="gase"
-        app:layout_constraintEnd_toStartOf="@id/lblStock"
-        android:ellipsize="marquee"/>
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:layout_marginHorizontal="10dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@id/imgCheck"
+        app:layout_constraintEnd_toStartOf="@id/lblStock"/>
     <TextView
         android:id="@+id/lblStock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="10dp"
         android:text="10"
         android:textSize="20sp"/>
