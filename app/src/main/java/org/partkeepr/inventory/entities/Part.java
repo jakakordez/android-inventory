@@ -1,5 +1,7 @@
 package org.partkeepr.inventory.entities;
 
+import androidx.annotation.NonNull;
+
 import org.json.JSONObject;
 
 import java.text.ParseException;
@@ -33,5 +35,11 @@ public class Part {
             }
         }
         return false;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return Id + ": " + Name;
     }
 }

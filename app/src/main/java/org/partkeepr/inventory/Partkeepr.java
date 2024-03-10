@@ -6,13 +6,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.partkeepr.inventory.entities.Category;
+import org.partkeepr.inventory.entities.Part;
 import org.partkeepr.inventory.entities.StockEntry;
 import org.partkeepr.inventory.entities.StorageLocation;
-import org.partkeepr.inventory.entities.Part;
 import org.partkeepr.inventory.entities.User;
 
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Locale;
 
 public class Partkeepr {
     Client client;
@@ -35,6 +38,7 @@ public class Partkeepr {
                 for(int i = 0; i < jsonArray.length(); i++){
                     parts.add(ParsePart(jsonArray.getJSONObject(i)));
                 }
+                Collections.sort(parts, Comparator.comparing(t -> t.Name.toLowerCase(Locale.ROOT)));
                 onParts.Result(parts);
             }
             catch (Exception e){
@@ -107,6 +111,7 @@ public class Partkeepr {
                 for(int i = 0; i < jsonArray.length(); i++){
                     entries.add(ParseLocation(jsonArray.getJSONObject(i)));
                 }
+                Collections.sort(entries, Comparator.comparing(t -> t.Name.toLowerCase(Locale.ROOT)));
                 onLocations.Result(entries);
             }
             catch (Exception e){
