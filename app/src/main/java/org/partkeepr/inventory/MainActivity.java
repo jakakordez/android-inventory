@@ -193,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
             if(locations != null){
                 ShowLocationDialog(l -> {
                     selectedLocation = l;
+                    setTitle(l.Name);
                     LoadParts();
                 });
             }
