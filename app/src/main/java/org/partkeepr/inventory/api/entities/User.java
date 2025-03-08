@@ -1,4 +1,4 @@
-package org.partkeepr.inventory.entities;
+package org.partkeepr.inventory.api.entities;
 
 public class User {
     public String Id;

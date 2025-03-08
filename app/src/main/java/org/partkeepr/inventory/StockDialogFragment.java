@@ -1,24 +1,25 @@
 package org.partkeepr.inventory;
 
 import android.app.Dialog;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
-import org.partkeepr.inventory.entities.Part;
+import org.partkeepr.inventory.api.InventoryApi;
+import org.partkeepr.inventory.api.entities.Part;
+
+import java.util.Locale;
 
 public class StockDialogFragment extends DialogFragment {
 
     public Part part;
-    public Partkeepr partkeepr;
+    public InventoryApi inventoryApi;
     public Runnable OnChange;
 
     @Override
@@ -34,18 +35,18 @@ public class StockDialogFragment extends DialogFragment {
         EditText txtComment = v.findViewById(R.id.txtComment);
 
         lblTitle.setText(part.Name);
-        txtNumber.setText(part.StockLevel+"");
+        txtNumber.setText(String.format(Locale.ENGLISH, "%d", part.StockLevel));
 
         btnPlus.setOnClickListener(v1 -> {
             int amount = Integer.parseInt(txtNumber.getText().toString());
             amount++;
-            txtNumber.setText(amount+"");
+            txtNumber.setText(String.format(Locale.ENGLISH, "%d", amount));
         });
 
         btnMinus.setOnClickListener(v1 -> {
             int amount = Integer.parseInt(txtNumber.getText().toString());
             amount--;
-            txtNumber.setText(amount+"");
+            txtNumber.setText(String.format(Locale.ENGLISH, "%d", amount));
         });
 
         // Use the Builder class for convenient dialog construction
@@ -54,29 +55,15 @@ public class StockDialogFragment extends DialogFragment {
             .setView(v)
             .setPositiveButton("Save", (dialog, id) -> {
                 int amount = Integer.parseInt(txtNumber.getText().toString());
-                if(amount == part.StockLevel){
-                    partkeepr.AddStock(part, 0, txtComment.getText().toString(), argument -> {
-                        if(argument) {
+                String comment = txtComment.getText().toString();
+                inventoryApi.SetStock(part.Id, amount, comment)
+                        .thenAccept(r -> {
                             if(OnChange != null) OnChange.run();
                             dialog.dismiss();
-                        }
-                        else Toast.makeText(getContext(), "Error", Toast.LENGTH_SHORT).show();
-
-                    });
-                }else{
-                    partkeepr.SetStock(part, amount, txtComment.getText().toString(), argument -> {
-                        if(argument) {
-                            if(OnChange != null) OnChange.run();
-                            dialog.dismiss();
-                        }
-                        else Toast.makeText(getContext(), "Error", Toast.LENGTH_SHORT).show();
-                    });
-                }
+                        });
             })
-            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                public void onClick(DialogInterface dialog, int id) {
-                    // User cancelled the dialog
-                }
+            .setNegativeButton("Cancel", (dialog, id) -> {
+                // User cancelled the dialog
             });
         // Create the AlertDialog object and return it
         return builder.create();

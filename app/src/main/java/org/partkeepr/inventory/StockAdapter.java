@@ -10,51 +10,45 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import org.partkeepr.inventory.entities.StockEntry;
+import org.partkeepr.inventory.api.entities.StockEntry;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 public class StockAdapter extends ArrayAdapter<StockEntry> {
-    public StockAdapter(@NonNull Context context, int resource, @NonNull List<StockEntry> objects) {
+    public StockAdapter(@NonNull Context context, int resource,
+                        @NonNull List<StockEntry> objects)
+    {
         super(context, resource, objects);
     }
 
     public View getView(int pos, View convertView, ViewGroup parent){
         View v = convertView;
         if(v==null) {
-            LayoutInflater vi = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater vi = (LayoutInflater)getContext()
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             v = vi.inflate(R.layout.item_stock, null);
         }
 
         StockEntry entry = getItem(pos);
-        TextView tv = (TextView)v.findViewById(R.id.lblComment);
+        TextView tv = v.findViewById(R.id.lblComment);
         tv.setText(entry.Comment);
 
         TextView lblUser = v.findViewById(R.id.lblUser);
-        lblUser.setText(entry.User.Username);
+        lblUser.setText(entry.UserName);
 
         TextView lblStock = v.findViewById(R.id.lblStock);
-        lblStock.setText((entry.StockLevel > 0?"+":"")+entry.StockLevel);
-        if(entry.StockLevel > 0){
+        String sign = entry.Change > 0 ? "+" : "";
+        lblStock.setText(String.format(Locale.ENGLISH, "%s%d", sign, entry.Change));
+        if(entry.Change > 0){
             lblStock.setTextColor(Color.GREEN);
         }
         else lblStock.setTextColor(Color.RED);
 
         TextView lblDateTime = v.findViewById(R.id.lblDateTime);
-        String dtStart = "2010-10-15T09:27:37Z";
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-        SimpleDateFormat outFormat = new SimpleDateFormat("HH:mm:ss dd.MM.yyyy");
-        try {
-            Date date = format.parse(entry.DateTime.substring(0, 19));
-            lblDateTime.setText(outFormat.format(date));
-        } catch (ParseException e) {
-            e.printStackTrace();
-            lblDateTime.setText(entry.DateTime);
-        }
-
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+        lblDateTime.setText(entry.Timestamp.format(formatter));
 
         return v;
     }

@@ -11,25 +11,25 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 
-import org.partkeepr.inventory.entities.Part;
+import org.partkeepr.inventory.api.entities.Part;
 
 import java.util.List;
-import java.util.Set;
 
 public class PartsAdapter extends ArrayAdapter<Part> {
-    Set<String> checkedParts;
 
-    public PartsAdapter(@NonNull Context context, int resource, @NonNull List<Part> objects, Set<String> checkedParts) {
+    public PartsAdapter(@NonNull Context context, int resource,
+                        @NonNull List<Part> objects)
+    {
         super(context, resource, objects);
-        this.checkedParts = checkedParts;
     }
 
-    String selected = null;
+    Integer selected = null;
 
     public View getView(int pos, View convertView, ViewGroup parent){
         View v = convertView;
         if(v==null) {
-            LayoutInflater vi = (LayoutInflater)getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            LayoutInflater vi = (LayoutInflater)getContext()
+                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
             v = vi.inflate(R.layout.item_part, null);
         }
 
@@ -40,13 +40,13 @@ public class PartsAdapter extends ArrayAdapter<Part> {
         TextView lblStock = v.findViewById(R.id.lblStock);
         lblStock.setText(part.StockLevel+"");
 
-        if(part.Id.equals(selected)){
+        if(selected != null && part.Id == selected){
             v.setBackgroundColor(Color.LTGRAY);
         }
         else v.setBackgroundColor(Color.WHITE);
 
         ImageView imgCheck = v.findViewById(R.id.imgCheck);
-        if(checkedParts.contains(part.Id)){
+        if(part.CheckedRecently()){
             imgCheck.setVisibility(View.VISIBLE);
         }
         else imgCheck.setVisibility(View.INVISIBLE);

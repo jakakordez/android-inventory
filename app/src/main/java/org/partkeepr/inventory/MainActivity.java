@@ -3,45 +3,46 @@ package org.partkeepr.inventory;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ArrayAdapter;
 import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import org.json.JSONObject;
-import org.partkeepr.inventory.entities.Part;
-import org.partkeepr.inventory.entities.StockEntry;
-import org.partkeepr.inventory.entities.StorageLocation;
+import org.partkeepr.inventory.api.ConnectionInfo;
+import org.partkeepr.inventory.api.InventoryApi;
+import org.partkeepr.inventory.api.entities.Location;
+import org.partkeepr.inventory.api.entities.LocationCategory;
+import org.partkeepr.inventory.api.entities.Part;
+import org.partkeepr.inventory.api.entities.StockEntry;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
+    List<LocationCategory> locationTree;
     ListView lstParts, lstStock;
-    Partkeepr partkeepr;
+    InventoryApi inventoryApi;
     ArrayList<StockEntry> stockEntries;
     StockAdapter stockAdapter;
     ArrayList<Part> parts;
     PartsAdapter partAdapter;
-    ArrayList<StorageLocation> locations;
-    StorageLocation selectedLocation;
+    Location selectedLocation;
     Part selectedPart;
     ImageButton btnAdd;
     ImageButton btnMove;
-    Set<String> checkedParts = new HashSet<String>();
     static final int LAUNCH_QR_ACTIVITY = 1;
 
     @Override
@@ -52,16 +53,36 @@ public class MainActivity extends AppCompatActivity {
         lstParts = findViewById(R.id.lstParts);
         btnAdd = findViewById(R.id.btnAdd);
         btnMove = findViewById(R.id.btnMove);
-        Initialize(new Client());
 
-        if (ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.CAMERA)
-                == PackageManager.PERMISSION_DENIED){
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.CAMERA}, 1);
+        if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
+        {
+            ActivityCompat.requestPermissions(this, new String[] {
+                    Manifest.permission.CAMERA }, 1);
         }
     }
 
-    private void Initialize(Client client){
-        partkeepr = new Partkeepr(client);
+    private void TryToConnect(ConnectionInfo info) {
+        InventoryApi.Connect(info)
+                .thenAccept(api -> {
+                    info.Store(getPreferences(MODE_PRIVATE));
+                    runOnUiThread(() -> Initialized(api));
+                })
+                .handle((inventoryApi, throwable) -> {
+                    if (throwable != null) {
+                        if (throwable.getCause() instanceof SocketTimeoutException) {
+                            Toast("Unable to reach the server");
+                        }
+                        else {
+                            Toast("Unable to login");
+                        }
+                    }
+                    return null;
+                });
+    }
+
+    private void Initialized(InventoryApi api) {
+        inventoryApi = api;
 
         stockEntries = new ArrayList<>();
         stockAdapter = new StockAdapter(this, R.layout.item_stock, stockEntries);
@@ -69,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         lstStock.setAdapter(stockAdapter);
 
         parts = new ArrayList<>();
-        partAdapter = new PartsAdapter(this, R.layout.item_part, parts, checkedParts);
+        partAdapter = new PartsAdapter(this, R.layout.item_part, parts);
         lstParts.setAdapter(partAdapter);
         lstParts.setOnItemClickListener((parent, view, position, id) -> {
             selectedPart = partAdapter.getItem(position);
@@ -77,27 +98,28 @@ public class MainActivity extends AppCompatActivity {
             LoadStock(partAdapter.getItem(position));
         });
 
-        LoadParts();
-        partkeepr.GetLocations(newLocations -> {
-            if(newLocations == null){
-                Log.e("GUI", "Loading locations failed");
-                runOnUiThread(()-> {
-                    Toast.makeText(MainActivity.this, "Loading locations failed", Toast.LENGTH_SHORT).show();
-                });
-            }
-            else{
-                Log.i("GUI", "Received " + newLocations.size() + " locations");
-                locations = newLocations;
-                partkeepr.PersistCredentials(getPreferences(MODE_PRIVATE));
-            }
-        });
-
+        inventoryApi
+            .GetLocationTree()
+            .thenAccept(locations -> {
+                Log.i("GUI", "Received " + locations.size() + " root locations");
+                locationTree = locations;
+                OpenLocation();
+            })
+            .handle((a, ex) -> {
+                if (ex != null) {
+                    Log.e("GUI", "Loading locations failed");
+                    runOnUiThread(() -> {
+                        Toast("Loading locations failed");
+                    });
+                }
+                return null;
+            });
 
         btnAdd.setOnClickListener(v -> {
             if(selectedPart != null) {
                 StockDialogFragment dialog = new StockDialogFragment();
                 dialog.part = selectedPart;
-                dialog.partkeepr = partkeepr;
+                dialog.inventoryApi = inventoryApi;
                 dialog.OnChange = this::LoadParts;
                 dialog.show(getSupportFragmentManager(), null);
             }
@@ -106,30 +128,30 @@ public class MainActivity extends AppCompatActivity {
         btnMove.setOnClickListener(v -> {
             if (selectedPart != null) {
                 ShowLocationDialog(location -> {
-                    selectedPart.PartLocation = location;
-                    partkeepr.PutPart(success -> {
+                    selectedPart.LocationId = location.Id;
+                    inventoryApi.PutPart(selectedPart).thenAccept(r -> {
                         LoadParts();
-                    },selectedPart);
+                    });
                 });
             }
         });
+
+        OpenLocation();
     }
 
     public void LoadParts(){
-        final String id = selectedPart != null ? selectedPart.Id : null;
+        final int id = selectedPart != null ? selectedPart.Id : -1;
         selectedPart = null;
-        partkeepr.GetParts(newParts -> {
+        inventoryApi.GetParts(selectedLocation.Id).thenAccept(newParts -> {
             if(newParts == null){
                 Log.e("GUI", "Loading parts failed");
-                runOnUiThread(()-> {
-                    Toast.makeText(MainActivity.this, "Loading parts failed", Toast.LENGTH_SHORT).show();
-                });
+                runOnUiThread(()-> Toast("Loading parts failed"));
             }
             else {
                 Log.i("GUI", "Received " + newParts.size() + " parts");
                 runOnUiThread(()->{
                     for (Part newPart : newParts) {
-                        if(newPart.Id.equals(id)) {
+                        if(newPart.Id == id) {
                             selectedPart = newPart;
                             break;
                         }
@@ -141,20 +163,19 @@ public class MainActivity extends AppCompatActivity {
                     if(selectedPart != null) LoadStock(selectedPart);
                 });
             }
-        }, selectedLocation);
+        });
     }
 
     public void LoadStock(Part part){
-        partkeepr.GetStock(stock -> {
+        inventoryApi.GetStock(part.Id).thenAccept(stock -> {
             runOnUiThread(()->{
-                part.StockEntries = stock;
-                if(part.CheckedThisWeek()) checkedParts.add(part.Id);
+                stock.sort((o1, o2) -> o2.Timestamp.compareTo(o1.Timestamp));
                 stockEntries.clear();
                 stockEntries.addAll(stock);
                 stockAdapter.notifyDataSetChanged();
                 partAdapter.notifyDataSetChanged();
             });
-        }, part);
+        });
     }
 
     @Override
@@ -164,43 +185,44 @@ public class MainActivity extends AppCompatActivity {
         return true;
     }
 
-    public void ShowLocationDialog(Consumer<StorageLocation> handler)
+    public void ShowLocationDialog(Consumer<Location> handler)
     {
-        AlertDialog.Builder builderSingle = new AlertDialog.Builder(this);
-        builderSingle.setIcon(R.drawable.ic_launcher_background);
-        builderSingle.setTitle("Select location");
+        LocationsDialog dialog = new LocationsDialog();
+        dialog.locationTree = locationTree;
+        dialog.selectedLocation = selectedLocation;
+        dialog.onSelect = handler;
+        dialog.show(getSupportFragmentManager(), "Locations");
+    }
 
-        final ArrayAdapter<StorageLocation> arrayAdapter = new ArrayAdapter<>(this,
-                android.R.layout.select_dialog_singlechoice, locations);
-
-        int selected = locations.indexOf(selectedLocation);
-        builderSingle.setSingleChoiceItems(arrayAdapter, selected, (dialog, i) -> {
-            dialog.dismiss();
-            handler.accept(arrayAdapter.getItem(i));
-        });
-
-        builderSingle.setNegativeButton("All", (dialog, which) -> {
-            dialog.dismiss();
-            handler.accept(null);
-        });
-
-        builderSingle.show();
+    public void OpenLocation()
+    {
+        if(locationTree != null){
+            ShowLocationDialog(l -> {
+                selectedLocation = l;
+                setTitle(l.Name);
+                LoadParts();
+            });
+        }
     }
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if(item.getItemId() == R.id.menu_location){
-            if(locations != null){
-                ShowLocationDialog(l -> {
-                    selectedLocation = l;
-                    setTitle(l.Name);
-                    LoadParts();
-                });
-            }
+            OpenLocation();
             return true;
         }
         else if(item.getItemId() == R.id.menu_refresh){
-            LoadParts();
+            if (inventoryApi == null) {
+                try {
+                    SharedPreferences pref = getPreferences(MODE_PRIVATE);
+                    TryToConnect(ConnectionInfo.FromPreferences(pref));
+                } catch (Exception e) {
+                    Toast("Unable to login");
+                }
+            }
+            else {
+                LoadParts();
+            }
             return true;
         }
         else if(item.getItemId() == R.id.menu_login){
@@ -212,14 +234,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onStart() {
-        super.onStart();
-
-        Client client = Client.FromPreferences(getPreferences(MODE_PRIVATE));
-        if (client != null)
-        {
-            Initialize(client);
+    protected void onResume() {
+        if (inventoryApi == null) {
+            try {
+                SharedPreferences pref = getPreferences(MODE_PRIVATE);
+                TryToConnect(ConnectionInfo.FromPreferences(pref));
+            } catch (Exception e) {
+                Toast("Unable to login");
+            }
         }
+        super.onResume();
     }
 
     @Override
@@ -231,20 +255,20 @@ public class MainActivity extends AppCompatActivity {
                 String result = data.getStringExtra(QrCodeScanner.KEY_QR_CODE);
                 try {
                     JSONObject jsonObject = new JSONObject(result);
-                    String username = jsonObject.getString("username");
-                    String password = jsonObject.getString("password");
-                    String ip = jsonObject.getString("ip");
-                    Toast.makeText(getApplicationContext(), "Logging in as " + username, Toast.LENGTH_SHORT).show();
-                    Initialize(new Client(ip, username, password));
+                    ConnectionInfo info = ConnectionInfo.FromQrCode(jsonObject);
+                    Toast("Logging in as " + info.username);
+                    TryToConnect(info);
                 }
                 catch (Exception e){
-                    e.printStackTrace();
+                    Toast("Unable to login: " + e.getMessage());
                 }
-
-            }
-            if (resultCode == Activity.RESULT_CANCELED) {
-                //Write your code if there's no result
             }
         }
+    }
+
+    private void Toast(String message) {
+        runOnUiThread(() -> {
+            Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        });
     }
 }

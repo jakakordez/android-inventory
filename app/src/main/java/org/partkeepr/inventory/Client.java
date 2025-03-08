@@ -1,142 +1,148 @@
 package org.partkeepr.inventory;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
+import android.util.Log;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.partkeepr.inventory.api.IPayloadProvider;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import android.content.SharedPreferences;
-import android.util.Base64;
-import android.util.Log;
-
-import org.json.JSONObject;
 
 public class Client {
-
-    public interface OnResult<T>{
-
-        void Result(T argument);
-    }
     String ip;
-    String user;
-    String password;
+    String token;
     ExecutorService executorService;
 
-    public Client(String ip, String username, String password) {
+    public Client(String ip) {
         executorService = Executors.newSingleThreadExecutor();
         this.ip = ip;
-        this.user = username;
-        this.password = password;
     }
 
-    public Client(){
-        executorService = Executors.newSingleThreadExecutor();
-        ip = "192.168.1.1:8080";
-        user = "user";
-        password = "pass123";
+    public CompletableFuture<Boolean> Login(String username, String password) {
+        CompletableFuture<Boolean> future = new CompletableFuture<>();
 
-    }
+        IPayloadProvider<JSONObject> payload =() -> {
+            JSONObject loginModel = new JSONObject();
+            loginModel.put("Email", username);
+            loginModel.put("Password", password);
+            return loginModel;
+        };
 
-    public static Client FromPreferences(SharedPreferences preferences)
-    {
-        String user = preferences.getString("user", "");
-        String password = preferences.getString("password", "");
-        String ip = preferences.getString("ip", "");
-        if (user.isEmpty() || password.isEmpty() || ip.isEmpty())
-        {
-            return null;
-        }
-        return new Client(ip, user, password);
-    }
-
-    public void PersistCredentials(SharedPreferences preferences)
-    {
-        SharedPreferences.Editor editor = preferences.edit();
-        editor.putString("user", user);
-        editor.putString("password", password);
-        editor.putString("ip", ip);
-        editor.apply();
-    }
-
-    public Future<JSONObject> Request(String address, OnResult<JSONObject> onResult){
-        return executorService.submit(() -> {
-            JSONObject jsonObject = RequestSync(address);
-            onResult.Result(jsonObject);
-            return jsonObject;
-        });
-    }
-
-    private JSONObject RequestSync(String address){
-        try {
-            URL url = new URL("http://" + ip + "/api" + address);
-            HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-            urlConnection.setRequestProperty("Authorization", GetAuth());
-            try {
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                int code = urlConnection.getResponseCode();
-                Log.i("CLIENT", "GET " + url + ": got response code " + code);
-                if(code < 200 || code >= 300) return null;
-                BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                StringBuilder responseStrBuilder = new StringBuilder();
-                String inputStr;
-                while ((inputStr = streamReader.readLine()) != null) {
-                    responseStrBuilder.append(inputStr);
+        Post("/api/auth/login", payload)
+            .handle((model, ex) -> {
+                if (ex != null) {
+                    future.completeExceptionally(ex);
                 }
-                return new JSONObject(responseStrBuilder.toString());
-            } finally {
-                urlConnection.disconnect();
-            }
-        }
-        catch (Exception e){
-            return null;
-        }
+                else {
+                    try {
+                        token = model.getString("token");
+                        future.complete(true);
+                    } catch (JSONException e) {
+                        future.completeExceptionally(ex);
+                    }
+                }
+                return null;
+            });
+        return future;
     }
 
-    private String GetAuth(){
-        String auth = user + ":" + password;
-        String encodedAuth = Base64.encodeToString(auth.getBytes(StandardCharsets.UTF_8), Base64.DEFAULT);
-        return "Basic " + encodedAuth;
+    public CompletableFuture<JSONArray> List(String address) {
+        return Request("GET", address, null)
+            .thenCompose(data -> {
+                try {
+                    return CompletableFuture.completedFuture(new JSONArray(data));
+                } catch (JSONException e) {
+                    CompletableFuture<JSONArray> failedFuture = new CompletableFuture<>();
+                    failedFuture.completeExceptionally(e);
+                    return failedFuture;
+                }
+            });
     }
 
-    public void Put(String address, String data, OnResult<Boolean> onResult){
+    public CompletableFuture<JSONObject> Post(String address,
+                                              IPayloadProvider<JSONObject> payload)
+    {
+        return RequestWithJson("POST", address, payload)
+            .thenCompose(data -> {
+                try {
+                    return CompletableFuture.completedFuture(new JSONObject(data));
+                } catch (JSONException e) {
+                    CompletableFuture<JSONObject> failedFuture = new CompletableFuture<>();
+                    failedFuture.completeExceptionally(e);
+                    return failedFuture;
+                }
+            });
+    }
+
+    public CompletableFuture<String> RequestWithJson(String method, String address,
+                                             IPayloadProvider<JSONObject> payloadProvider)
+    {
+        return Request(method, address, () -> payloadProvider.Provide().toString());
+    }
+
+    public CompletableFuture<String> Request(String method, String address,
+                                             IPayloadProvider<String> payloadProvider)
+    {
+        CompletableFuture<String> future = new CompletableFuture<>();
         executorService.submit(() -> {
             try {
                 URL url = new URL("http://" + ip + address);
                 HttpURLConnection httpCon = (HttpURLConnection) url.openConnection();
-                httpCon.setRequestProperty("Authorization", GetAuth());
-                httpCon.setDoOutput(true);
-                httpCon.setRequestMethod("PUT");
-                OutputStreamWriter out = new OutputStreamWriter(httpCon.getOutputStream());
-                out.write(data);
-                out.close();
+                httpCon.setConnectTimeout(2000);
+                if (token != null) {
+                    httpCon.setRequestProperty("Authorization", "Bearer " + token);
+                }
+                httpCon.setRequestMethod(method);
+                if (payloadProvider != null) {
+                    httpCon.setRequestProperty("Content-Type", "application/json");
+                    httpCon.setDoOutput(true);
+                    OutputStream outStream = httpCon.getOutputStream();
+                    OutputStreamWriter out = new OutputStreamWriter(outStream);
+                    out.write(payloadProvider.Provide());
+                    out.close();
+                }
                 int code = httpCon.getResponseCode();
-                Log.i("CLIENT", "PUT " + url + ": got response code " + code);
-                if(code >= 200 && code < 300){
-                    onResult.Result(true);
-                    return true;
-                }else{
-                    InputStream in = new BufferedInputStream(httpCon.getInputStream());
-                    BufferedReader streamReader = new BufferedReader(new InputStreamReader(in, "UTF-8"));
-                    StringBuilder responseStrBuilder = new StringBuilder();
+                Log.i("CLIENT", method + " " + url + ": got " + code);
+
+                try(InputStream in = new BufferedInputStream(httpCon.getInputStream());
+                    InputStreamReader sr = new InputStreamReader(in, UTF_8);
+                    BufferedReader br = new BufferedReader(sr)) {
+
+                    StringBuilder stringBuilder = new StringBuilder();
                     String inputStr;
-                    while ((inputStr = streamReader.readLine()) != null) {
-                        responseStrBuilder.append(inputStr);
+                    while ((inputStr = br.readLine()) != null) {
+                        stringBuilder.append(inputStr);
                     }
-                    Log.e("PUT", responseStrBuilder.toString());
+
+                    if (code >= 200 && code < 300) {
+                        future.complete(stringBuilder.toString());
+                        return true;
+                    }
+                    Log.e("CLIENT", method + ": " + stringBuilder);
+                    future.completeExceptionally(
+                            new IOException("Server returned code " + code));
+                    return false;
                 }
             }
             catch (Exception e){
-                e.printStackTrace();
+                future.completeExceptionally(e);
+                return false;
             }
-            onResult.Result(false);
-            return false;
         });
+        return future;
     }
 }
