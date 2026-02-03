@@ -1,18 +1,18 @@
 package org.partkeepr.inventory.view;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.View;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 
 import com.amrdeveloper.treeview.TreeNode;
 import com.amrdeveloper.treeview.TreeViewHolder;
 
+import org.partkeepr.inventory.ColorHelper;
 import org.partkeepr.inventory.R;
 import org.partkeepr.inventory.api.entities.Location;
-
 
 public class LocationNodeHolder extends TreeViewHolder {
 
@@ -30,17 +30,13 @@ public class LocationNodeHolder extends TreeViewHolder {
         Location location = (Location) node.getValue();
         lblName.setText(location.Name);
         int bgColor;
-        int txtColor;
+        Context ctx = itemView.getContext();
         if (selectedLocation == location) {
-            bgColor = R.color.design_default_color_primary;
-            txtColor = R.color.white;
+            bgColor = Color.GRAY;
         }
         else {
-            bgColor = R.color.white;
-            txtColor = R.color.black;
+            bgColor = ColorHelper.GetBackgroundColor(ctx);
         }
-        Context ctx = itemView.getContext();
-        itemView.setBackgroundColor(ContextCompat.getColor(ctx, bgColor));
-        lblName.setTextColor(ContextCompat.getColor(ctx, txtColor));
+        itemView.setBackgroundColor(bgColor);
     }
 }

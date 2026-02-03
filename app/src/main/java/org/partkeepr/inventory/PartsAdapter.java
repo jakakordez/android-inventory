@@ -2,6 +2,7 @@ package org.partkeepr.inventory;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,10 +41,10 @@ public class PartsAdapter extends ArrayAdapter<Part> {
         TextView lblStock = v.findViewById(R.id.lblStock);
         lblStock.setText(part.StockLevel+"");
 
-        if(selected != null && part.Id == selected){
-            v.setBackgroundColor(Color.LTGRAY);
+        if (selected != null && part.Id == selected){
+            v.setBackgroundColor(Color.GRAY);
         }
-        else v.setBackgroundColor(Color.WHITE);
+        else v.setBackgroundColor(ColorHelper.GetBackgroundColor(getContext()));
 
         ImageView imgCheck = v.findViewById(R.id.imgCheck);
         if(part.CheckedRecently()){
