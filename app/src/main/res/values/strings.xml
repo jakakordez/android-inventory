@@ -1,5 +1,7 @@
 <resources>
-    <string name="app_name">Inventory</string>
+    <string name="app_name" translatable="false">Inventory</string>
     <string name="cancel">Cancel</string>
     <string name="select_location">Select location</string>
+    <string name="set">Set</string>
+    <string name="comment">Comment</string>
 </resources>

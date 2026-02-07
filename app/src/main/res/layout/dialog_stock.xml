@@ -11,8 +11,7 @@
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
         android:ellipsize="marquee"
-        android:textSize="30sp"
-        android:text="Title"/>
+        android:textSize="30sp"/>
 
     <Button
         android:id="@+id/btnMinus"
@@ -50,7 +49,7 @@
         android:id="@+id/txtComment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Comment"
+        android:hint="@string/comment"
         app:layout_constraintTop_toBottomOf="@id/txtNumber"
         />
 </androidx.constraintlayout.widget.ConstraintLayout>

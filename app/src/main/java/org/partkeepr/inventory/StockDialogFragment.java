@@ -53,7 +53,7 @@ public class StockDialogFragment extends DialogFragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder
             .setView(v)
-            .setPositiveButton("Save", (dialog, id) -> {
+            .setPositiveButton(R.string.set, (dialog, id) -> {
                 int amount = Integer.parseInt(txtNumber.getText().toString());
                 String comment = txtComment.getText().toString();
                 inventoryApi.SetStock(part.Id, amount, comment)
@@ -62,7 +62,7 @@ public class StockDialogFragment extends DialogFragment {
                             dialog.dismiss();
                         });
             })
-            .setNegativeButton("Cancel", (dialog, id) -> {
+            .setNegativeButton(R.string.cancel, (dialog, id) -> {
                 // User cancelled the dialog
             });
         // Create the AlertDialog object and return it
