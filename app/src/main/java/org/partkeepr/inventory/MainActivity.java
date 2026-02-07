@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
         lstStock.setAdapter(stockAdapter);
 
         parts = new ArrayList<>();
-        partAdapter = new PartsAdapter(this, R.layout.item_part, parts);
+        partAdapter = new PartsAdapter(this, parts);
         lstParts.setAdapter(partAdapter);
         lstParts.setOnItemClickListener((parent, view, position, id) -> {
             selectedPart = partAdapter.getItem(position);
@@ -207,11 +207,19 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if(item.getItemId() == R.id.menu_location){
+        if (item.getItemId() == R.id.menu_zero) {
+            partAdapter.ShowZero = !partAdapter.ShowZero;
+            partAdapter.notifyDataSetChanged();
+            int color = partAdapter.ShowZero ?
+                    R.color.design_default_color_error : R.color.white;
+            item.setIconTintList(ContextCompat.getColorStateList(this, color));
+            return true;
+        }
+        if (item.getItemId() == R.id.menu_location) {
             OpenLocation();
             return true;
         }
-        else if(item.getItemId() == R.id.menu_refresh){
+        else if (item.getItemId() == R.id.menu_refresh) {
             if (inventoryApi == null) {
                 try {
                     SharedPreferences pref = getPreferences(MODE_PRIVATE);

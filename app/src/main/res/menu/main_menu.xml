@@ -2,6 +2,11 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:id="@+id/menu_zero"
+        android:title="Show empty"
+        app:showAsAction="always"
+        android:icon="@drawable/baseline_empty_24" />
+    <item
         android:id="@+id/menu_location"
         android:title="Location"
         app:showAsAction="always"
